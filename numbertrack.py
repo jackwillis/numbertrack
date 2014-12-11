@@ -1,29 +1,18 @@
 #!/usr/bin/env python
 
-# numbertrack: store and keep track of phone numbers called
+# numbertrack.py: main program loop
 #
 # Copyright (C) 2014 Jack Willis <jack@attac.us>
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This file is part of Numbertrack.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Licensed under GNU General Public License 3.0 or later.
+# Some rights reserved. See COPYING.
 
 from tkinter import *
 from tkinter.ttk import *
 
-import shelve
-import datetime
-
-import phonenumbers
+from numberstore import *
 
 NUMBERTRACK_VERSION = "0.0.1"
 
@@ -115,55 +104,6 @@ class NumberTrack(Frame):
 
     def searchTags(self, evt):
         print()
-
-class NumberStore():
-    def __init__(self, filename):
-        self.db = shelve.open(filename, writeback=True)
-
-        if not 'numbers' in self.db:
-            self.db['numbers'] = {}
-
-    def initNumber(self, number):
-        if not number in self.db['numbers']:
-            self.db['numbers'][number] = {'accesses': [], 'info': '#yolo'}
-
-    def touchNumber(self, number):
-        self.initNumber(number)
-        self.db['numbers'][number]['accesses'].append(datetime.datetime.now())
-
-        print(self.db.__dict__['cache'])
-
-    def getNumbers(self):
-        return self.db['numbers']
-
-    def getAccesses(self, number):
-        if not number in self.db['numbers']:
-            return None
-        if not 'info' in self.db['numbers'][number]:
-            return None
-
-        return self.db['numbers'][number]['info']
-
-    def getInfo(self, number):
-        if not number in self.db['numbers']:
-            return None
-
-        return self.db['numbers'][number]['info']
-
-    def setInfo(self, number, info):
-        self.initNumber(number)
-        self.db['numbers'][number]['info'] = info
-
-        print(self.db.__dict__['cache'])
-
-    def deleteNumber(self, number):
-        if number in self.db['numbers']:
-            del self.db['numbers'][number]
-
-        print(self.db.__dict__['cache'])
-
-    def close(self):
-        db.close()
 
 def main():
     root = Tk()
