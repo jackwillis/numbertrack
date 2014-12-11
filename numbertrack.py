@@ -36,21 +36,23 @@ class NumberTrack(Frame):
 
         self.numberstore = NumberStore("numbers.db")
 
-        Style().configure("TButton", padding=6, relief="flat", background="#ccc")
-
         self.columnconfigure(2, weight=1)
         self.columnconfigure(3, weight=1)
+        self.columnconfigure(4, weight=1)
         self.rowconfigure(1, weight=1)
 
         self.modifyEntry = Entry(self)
         self.modifyEntry.grid(row=0, column=0, columnspan=2, sticky=E+W)
         self.modifyEntry.insert(0, "555-1212")
 
-        touchNumberButton = Button(self, text="Touch number", command=self.touchNumber)
+        touchNumberButton = Button(self, text="Touch", command=self.touchNumber)
         touchNumberButton.grid(row=0, column=2, sticky=E+W)
 
-        deleteNumberButton = Button(self, text="Delete number", command=self.deleteNumber)
-        deleteNumberButton.grid(row=0, column=3, sticky=E+W)
+        touchNumberButton = Button(self, text="Update", command=self.updateInfo)
+        touchNumberButton.grid(row=0, column=3, sticky=E+W)
+
+        deleteNumberButton = Button(self, text="Delete", command=self.deleteNumber)
+        deleteNumberButton.grid(row=0, column=4, sticky=E+W)
 
         self.numbersBox = Listbox(self)
         self.numbersBox.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
@@ -61,7 +63,7 @@ class NumberTrack(Frame):
             self.numbersBox.insert(END, num)
 
         self.infoText = Text(self)
-        self.infoText.grid(row=1, column=2, columnspan=2, sticky=N+S+E+W)
+        self.infoText.grid(row=1, column=2, columnspan=3, sticky=N+S+E+W)
 
         self.showAllButton = Button(self, text="Show All", command=self.showAll)
         self.showAllButton.grid(row=2, column=0, sticky=E+W)
@@ -70,18 +72,23 @@ class NumberTrack(Frame):
         self.searchButton.grid(row=2, column=1, sticky=E+W)
 
         self.searchEntry = Entry(self)
-        self.searchEntry.grid(row=2, column=2, columnspan=2, sticky=E+W)
+        self.searchEntry.grid(row=2, column=2, columnspan=3, sticky=E+W)
 
 
         self.pack()
 
     def touchNumber(self):
-        newNumber = self.modifyEntry.get()
-        self.numberstore.touchNumber(newNumber)
+        number = self.modifyEntry.get()
+        self.numberstore.touchNumber(number)
+
+    def updateInfo(self):
+        number = self.modifyEntry.get()
+        info = self.infoText.get('1.0', END)
+        self.numberstore.updateInfo(number, info)
 
     def deleteNumber(self):
-        newNumber = self.modifyEntry.get()
-        self.numberstore.deleteNumber(newNumber)
+        number = self.modifyEntry.get()
+        self.numberstore.deleteNumber(number)
 
     def showAll(self):
         print()
@@ -106,6 +113,13 @@ class NumberStore():
     def touchNumber(self, number):
         self.initNumber(number)
         self.db['numbers'][number]['accesses'].append(datetime.datetime.now())
+
+        print(self.db.__dict__['cache'])
+
+    def updateInfo(self, number, info):
+        self.initNumber(number)
+        self.db['numbers'][number]['info'] = info
+
         print(self.db.__dict__['cache'])
 
     def deleteNumber(self, number):
