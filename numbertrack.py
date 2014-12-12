@@ -21,6 +21,7 @@ import phonenumbers
 
 NUMBERTRACK_VERSION = "0.0.1"
 
+
 class NumberTrack(Frame):
     def __init__(self, parent):
         Frame.__init__(self, parent)
@@ -30,12 +31,16 @@ class NumberTrack(Frame):
 
         self.parent.protocol("WM_DELETE_WINDOW", self.quit)
 
+        self.numberstore = None
+
         self.buildMenuBar()
         self.buildModifyEntry()
         self.buildActionButtons()
         self.buildNumbersBox()
         self.buildInfoText()
         self.buildBottomRow()
+
+        self.parent.bind('<Delete>', lambda evt: self.deleteNumber())
 
         #fakeNumberList = ['+1 (555) 555-5551','+15555551212','212-2231','123-5678','727-8383','339-4422']
         #for num in fakeNumberList:
@@ -51,7 +56,7 @@ class NumberTrack(Frame):
         self.menu.add_cascade(label="File", menu=self.fileMenu)
         self.fileMenu.add_command(label="New")
         self.fileMenu.add_command(label="Open", command=self.openDialog)
-        self.fileMenu.add_command(label="Save")
+        self.fileMenu.add_command(label="Save As")
 
         self.editMenu = Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Edit", menu=self.editMenu)
@@ -67,19 +72,22 @@ class NumberTrack(Frame):
         self.modifyEntry.grid(row=0, column=0, columnspan=2, sticky=E+W)
 
     def buildActionButtons(self):
+        addNumberButton = Button(self, text="Add", command=self.addNumber)
+        addNumberButton.grid(row=0, column=2, sticky=E+W)
+
         touchNumberButton = Button(self, text="Touch", command=self.touchNumber)
-        touchNumberButton.grid(row=0, column=2, sticky=E+W)
+        touchNumberButton.grid(row=0, column=3, sticky=E+W)
 
         callNumberButton = Button(self, text="Call", command=self.callNumber)
-        callNumberButton.grid(row=0, column=3, sticky=E+W)
+        callNumberButton.grid(row=0, column=4, sticky=E+W)
 
         deleteNumberButton = Button(self, text="Delete", command=self.deleteNumber)
-        deleteNumberButton.grid(row=0, column=4, sticky=E+W)
+        deleteNumberButton.grid(row=0, column=5, sticky=E+W)
 
     def buildNumbersBox(self):
         self.numbersBox = Listbox(self)
         self.numbersBox.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
-        self.numbersBox.bind('<<ListboxSelect>>', self.selectNumber)
+        self.numbersBox.bind('<<ListboxSelect>>', lambda evt: self.selectNumber())
 
     def populateNumbersBox(self):
         for num in self.numberstore.getNumberList():
@@ -88,7 +96,7 @@ class NumberTrack(Frame):
 
     def buildInfoText(self):
         self.infoText = Text(self, width=10)
-        self.infoText.grid(row=1, column=2, columnspan=3, sticky=N+S+E+W)
+        self.infoText.grid(row=1, column=2, columnspan=4, sticky=N+S+E+W)
 
     def buildBottomRow(self):
         self.showAllButton = Button(self, text="Show All", command=self.showAll)
@@ -98,7 +106,7 @@ class NumberTrack(Frame):
         self.searchButton.grid(row=2, column=1, sticky=E+W)
 
         self.searchEntry = Entry(self)
-        self.searchEntry.grid(row=2, column=2, columnspan=3, sticky=E+W)
+        self.searchEntry.grid(row=2, column=2, columnspan=4, sticky=E+W)
 
     def refresh(self):
         number = self.modifyEntry.get()
@@ -106,6 +114,17 @@ class NumberTrack(Frame):
 
         self.infoText.delete("1.0", END)
         self.infoText.insert(END, (info or ""))
+
+    def addNumber(self):
+        number = self.modifyEntry.get().strip()
+
+        if not number:
+            return None
+
+        self.numberstore.initNumber(number)
+
+        self.numbersBox.insert(0, number)
+        self.numbersBox.selection_set(0, 0)
 
     def touchNumber(self):
         number = self.modifyEntry.get()
@@ -120,6 +139,8 @@ class NumberTrack(Frame):
         formattedNumber = phonenumbers.format_number(phonenumbers.parse(number, "US"), phonenumbers.PhoneNumberFormat.E164)
         webbrowser.open("tel:%s" % formattedNumber)
 
+        print(formattedNumber)
+
     def saveInfo(self):
         number = self.modifyEntry.get()
         info = self.infoText.get('1.0', END)
@@ -130,16 +151,19 @@ class NumberTrack(Frame):
     def deleteNumber(self):
         number = self.modifyEntry.get()
         self.numberstore.deleteNumber(number)
-        self.numbersBox.delete(self.numbersBox.curselection())
 
-    # called when focus is called to an number in the listbox
-    def selectNumber(self, evt):
+        selection = self.numbersBox.curselection()
+        self.numbersBox.delete(selection)
+        self.numbersBox.selection_set(selection, selection)
+        self.numbersBox.focus()
+
+        self.selectNumber()
+
+    def selectNumber(self):
         self.saveInfo()
 
-        # get selected number
-        w = evt.widget
-        index = int(w.curselection()[0])
-        number = w.get(index)
+        index = int(self.numbersBox.curselection()[0])
+        number = self.numbersBox.get(index)
 
         # display the number in the top entry box
         self.modifyEntry.delete(0, END)
@@ -169,7 +193,8 @@ class NumberTrack(Frame):
                           "Licensed under GNU General Public License 3.0 or later.")
 
     def quit(self):
-        self.numberstore.close()
+        if self.numberstore:
+            self.numberstore.close()
         self.parent.quit()
 
 
