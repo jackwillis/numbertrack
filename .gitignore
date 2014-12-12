@@ -1,4 +1,5 @@
 .python-version
 numbers.db*
+numbers.json
 build/*
 dist/*
