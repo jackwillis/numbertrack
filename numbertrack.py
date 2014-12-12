@@ -14,6 +14,9 @@ from tkinter.ttk import *
 
 from numberstore import *
 
+import webbrowser
+import phonenumbers
+
 NUMBERTRACK_VERSION = "0.0.1"
 
 class NumberTrack(Frame):
@@ -35,14 +38,17 @@ class NumberTrack(Frame):
         touchNumberButton = Button(self, text="Touch", command=self.touchNumber)
         touchNumberButton.grid(row=0, column=2, sticky=E+W)
 
+        callNumberButton = Button(self, text="Call", command=self.callNumber)
+        callNumberButton.grid(row=0, column=3, sticky=E+W)
+
         deleteNumberButton = Button(self, text="Delete", command=self.deleteNumber)
-        deleteNumberButton.grid(row=0, column=3, sticky=E+W)
+        deleteNumberButton.grid(row=0, column=4, sticky=E+W)
 
         self.numbersBox = Listbox(self)
         self.numbersBox.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
         self.numbersBox.bind('<<ListboxSelect>>', self.selectNumber)
 
-        fakeNumberList = ['555-5551','212-2231','123-5678','727-8383','339-4422']
+        fakeNumberList = ['+1 (555) 555-5551','+15555551212','212-2231','123-5678','727-8383','339-4422']
         for num in fakeNumberList:
             self.numberstore.touchNumber(num)
 
@@ -50,7 +56,7 @@ class NumberTrack(Frame):
             self.numbersBox.insert(END, num)
 
         self.infoText = Text(self)
-        self.infoText.grid(row=1, column=2, columnspan=2, sticky=N+S+E+W)
+        self.infoText.grid(row=1, column=2, columnspan=3, sticky=N+S+E+W)
 
         self.showAllButton = Button(self, text="Show All", command=self.showAll)
         self.showAllButton.grid(row=2, column=0, sticky=E+W)
@@ -59,13 +65,24 @@ class NumberTrack(Frame):
         self.searchButton.grid(row=2, column=1, sticky=E+W)
 
         self.searchEntry = Entry(self)
-        self.searchEntry.grid(row=2, column=2, columnspan=2, sticky=E+W)
+        self.searchEntry.grid(row=2, column=2, columnspan=3, sticky=E+W)
 
         self.pack()
 
     def touchNumber(self):
         number = self.modifyEntry.get()
         self.numberstore.touchNumber(number)
+
+    def callNumber(self):
+        number = self.numbersBox.get(self.numbersBox.curselection())
+
+        if not number.strip():
+            return None
+
+        print("calling number %s..." % number)
+
+        formattedNumber = phonenumbers.format_number(phonenumbers.parse(number, "US"), phonenumbers.PhoneNumberFormat.E164)
+        webbrowser.open("tel:%s" % formattedNumber)
 
     def saveInfo(self):
         number = self.modifyEntry.get()
