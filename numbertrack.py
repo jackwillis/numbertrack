@@ -28,9 +28,7 @@ class NumberTrack(Frame):
 
         self.numberstore = NumberStore("numbers.db")
 
-        self.columnconfigure(2, weight=1)
-        self.columnconfigure(3, weight=1)
-        self.rowconfigure(1, weight=1)
+        self.buildMenuBar()
 
         self.modifyEntry = Entry(self)
         self.modifyEntry.grid(row=0, column=0, columnspan=2, sticky=E+W)
@@ -55,7 +53,7 @@ class NumberTrack(Frame):
         for num in self.numberstore.getNumbers():
             self.numbersBox.insert(END, num)
 
-        self.infoText = Text(self)
+        self.infoText = Text(self, width=10)
         self.infoText.grid(row=1, column=2, columnspan=3, sticky=N+S+E+W)
 
         self.showAllButton = Button(self, text="Show All", command=self.showAll)
@@ -68,6 +66,25 @@ class NumberTrack(Frame):
         self.searchEntry.grid(row=2, column=2, columnspan=3, sticky=E+W)
 
         self.pack()
+
+    def buildMenuBar(self):
+        self.menu = Menu(self.parent)
+        self.parent.config(menu=self.menu)
+
+        self.fileMenu = Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="File", menu=self.fileMenu)
+        self.fileMenu.add_command(label="New")
+        self.fileMenu.add_command(label="Open")
+        self.fileMenu.add_command(label="Save")
+
+        self.editMenu = Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="Edit", menu=self.editMenu)
+        self.editMenu.add_command(label="Locale")
+
+        self.helpMenu = Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label="Help", menu=self.helpMenu)
+        self.helpMenu.add_command(label="Documentation")
+        self.helpMenu.add_command(label="About")
 
     def touchNumber(self):
         number = self.modifyEntry.get()
