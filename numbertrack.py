@@ -51,7 +51,8 @@ class NumberTrack(Frame):
             self.numberstore.touchNumber(num)
 
         for num in self.numberstore.getNumbers():
-            self.numbersBox.insert(END, num)
+            if num:
+                self.numbersBox.insert(END, num)
 
         self.infoText = Text(self, width=10)
         self.infoText.grid(row=1, column=2, columnspan=3, sticky=N+S+E+W)

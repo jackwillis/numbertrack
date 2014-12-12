@@ -10,8 +10,6 @@
 import shelve
 import datetime
 
-import phonenumbers
-
 class NumberStore():
     def __init__(self, filename):
         self.db = shelve.open(filename, writeback=True)
