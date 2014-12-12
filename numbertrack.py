@@ -30,19 +30,16 @@ class NumberTrack(Frame):
 
         self.parent.protocol("WM_DELETE_WINDOW", self.quit)
 
-        self.numberstore = NumberStore("numbers.json")
-
         self.buildMenuBar()
         self.buildModifyEntry()
         self.buildActionButtons()
         self.buildNumbersBox()
-        self.populateNumbersBox()
         self.buildInfoText()
         self.buildBottomRow()
 
-        fakeNumberList = ['+1 (555) 555-5551','+15555551212','212-2231','123-5678','727-8383','339-4422']
-        for num in fakeNumberList:
-            self.numberstore.touchNumber(num)
+        #fakeNumberList = ['+1 (555) 555-5551','+15555551212','212-2231','123-5678','727-8383','339-4422']
+        #for num in fakeNumberList:
+        #    self.numberstore.touchNumber(num)
 
         self.pack()
 
@@ -103,17 +100,22 @@ class NumberTrack(Frame):
         self.searchEntry = Entry(self)
         self.searchEntry.grid(row=2, column=2, columnspan=3, sticky=E+W)
 
+    def refresh(self):
+        number = self.modifyEntry.get()
+        info = self.numberstore.getInfo(number)
+
+        self.infoText.delete("1.0", END)
+        self.infoText.insert(END, (info or ""))
+
     def touchNumber(self):
         number = self.modifyEntry.get()
         self.numberstore.touchNumber(number)
 
     def callNumber(self):
-        number = self.numbersBox.get(self.numbersBox.curselection())
+        number = self.modifyEntry.get()
 
         if not number.strip():
             return None
-
-        print("calling number %s..." % number)
 
         formattedNumber = phonenumbers.format_number(phonenumbers.parse(number, "US"), phonenumbers.PhoneNumberFormat.E164)
         webbrowser.open("tel:%s" % formattedNumber)
@@ -128,6 +130,7 @@ class NumberTrack(Frame):
     def deleteNumber(self):
         number = self.modifyEntry.get()
         self.numberstore.deleteNumber(number)
+        self.numbersBox.delete(self.numbersBox.curselection())
 
     # called when focus is called to an number in the listbox
     def selectNumber(self, evt):
@@ -142,10 +145,7 @@ class NumberTrack(Frame):
         self.modifyEntry.delete(0, END)
         self.modifyEntry.insert(0, number)
 
-        # display the number's info in the text box
-        info = self.numberstore.getInfo(number)
-        self.infoText.delete("1.0", END)
-        self.infoText.insert(END, (info or ""))
+        self.refresh()
 
     def showAll(self, evt):
         print()
@@ -157,7 +157,11 @@ class NumberTrack(Frame):
         print()
 
     def openDialog(self):
-        askopenfilename()
+        filename = askopenfilename()
+        self.numberstore = NumberStore(filename)
+
+        self.populateNumbersBox()
+        self.refresh()
 
     def aboutDialog(self):
         showinfo(title="About Numbertrack",
