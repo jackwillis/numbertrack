@@ -10,6 +10,8 @@
 # Some rights reserved. See COPYING.
 
 from tkinter import *
+from tkinter.messagebox import *
+from tkinter.filedialog import *
 from tkinter.ttk import *
 
 from numberstore import *
@@ -26,45 +28,21 @@ class NumberTrack(Frame):
         self.parent = parent
         self.parent.title("Numbertrack v%s" % NUMBERTRACK_VERSION)
 
-        self.numberstore = NumberStore("numbers.db")
+        self.parent.protocol("WM_DELETE_WINDOW", self.quit)
+
+        self.numberstore = NumberStore("numbers.json")
 
         self.buildMenuBar()
-
-        self.modifyEntry = Entry(self)
-        self.modifyEntry.grid(row=0, column=0, columnspan=2, sticky=E+W)
-
-        touchNumberButton = Button(self, text="Touch", command=self.touchNumber)
-        touchNumberButton.grid(row=0, column=2, sticky=E+W)
-
-        callNumberButton = Button(self, text="Call", command=self.callNumber)
-        callNumberButton.grid(row=0, column=3, sticky=E+W)
-
-        deleteNumberButton = Button(self, text="Delete", command=self.deleteNumber)
-        deleteNumberButton.grid(row=0, column=4, sticky=E+W)
-
-        self.numbersBox = Listbox(self)
-        self.numbersBox.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
-        self.numbersBox.bind('<<ListboxSelect>>', self.selectNumber)
+        self.buildModifyEntry()
+        self.buildActionButtons()
+        self.buildNumbersBox()
+        self.populateNumbersBox()
+        self.buildInfoText()
+        self.buildBottomRow()
 
         fakeNumberList = ['+1 (555) 555-5551','+15555551212','212-2231','123-5678','727-8383','339-4422']
         for num in fakeNumberList:
             self.numberstore.touchNumber(num)
-
-        for num in self.numberstore.getNumbers():
-            if num:
-                self.numbersBox.insert(END, num)
-
-        self.infoText = Text(self, width=10)
-        self.infoText.grid(row=1, column=2, columnspan=3, sticky=N+S+E+W)
-
-        self.showAllButton = Button(self, text="Show All", command=self.showAll)
-        self.showAllButton.grid(row=2, column=0, sticky=E+W)
-
-        self.searchButton = Button(self, text="Search", command=self.search)
-        self.searchButton.grid(row=2, column=1, sticky=E+W)
-
-        self.searchEntry = Entry(self)
-        self.searchEntry.grid(row=2, column=2, columnspan=3, sticky=E+W)
 
         self.pack()
 
@@ -75,7 +53,7 @@ class NumberTrack(Frame):
         self.fileMenu = Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="File", menu=self.fileMenu)
         self.fileMenu.add_command(label="New")
-        self.fileMenu.add_command(label="Open")
+        self.fileMenu.add_command(label="Open", command=self.openDialog)
         self.fileMenu.add_command(label="Save")
 
         self.editMenu = Menu(self.menu, tearoff=0)
@@ -85,7 +63,45 @@ class NumberTrack(Frame):
         self.helpMenu = Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label="Help", menu=self.helpMenu)
         self.helpMenu.add_command(label="Documentation")
-        self.helpMenu.add_command(label="About")
+        self.helpMenu.add_command(label="About", command=self.aboutDialog)
+
+    def buildModifyEntry(self):
+        self.modifyEntry = Entry(self)
+        self.modifyEntry.grid(row=0, column=0, columnspan=2, sticky=E+W)
+
+    def buildActionButtons(self):
+        touchNumberButton = Button(self, text="Touch", command=self.touchNumber)
+        touchNumberButton.grid(row=0, column=2, sticky=E+W)
+
+        callNumberButton = Button(self, text="Call", command=self.callNumber)
+        callNumberButton.grid(row=0, column=3, sticky=E+W)
+
+        deleteNumberButton = Button(self, text="Delete", command=self.deleteNumber)
+        deleteNumberButton.grid(row=0, column=4, sticky=E+W)
+
+    def buildNumbersBox(self):
+        self.numbersBox = Listbox(self)
+        self.numbersBox.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
+        self.numbersBox.bind('<<ListboxSelect>>', self.selectNumber)
+
+    def populateNumbersBox(self):
+        for num in self.numberstore.getNumberList():
+            if num:
+                self.numbersBox.insert(END, num)
+
+    def buildInfoText(self):
+        self.infoText = Text(self, width=10)
+        self.infoText.grid(row=1, column=2, columnspan=3, sticky=N+S+E+W)
+
+    def buildBottomRow(self):
+        self.showAllButton = Button(self, text="Show All", command=self.showAll)
+        self.showAllButton.grid(row=2, column=0, sticky=E+W)
+
+        self.searchButton = Button(self, text="Search", command=self.search)
+        self.searchButton.grid(row=2, column=1, sticky=E+W)
+
+        self.searchEntry = Entry(self)
+        self.searchEntry.grid(row=2, column=2, columnspan=3, sticky=E+W)
 
     def touchNumber(self):
         number = self.modifyEntry.get()
@@ -139,6 +155,19 @@ class NumberTrack(Frame):
 
     def searchTags(self, evt):
         print()
+
+    def openDialog(self):
+        askopenfilename()
+
+    def aboutDialog(self):
+        showinfo(title="About Numbertrack",
+                 message="Numbertrack v%s. <http://www.attac.us/numbertrack/>\n" % NUMBERTRACK_VERSION +
+                          "Licensed under GNU General Public License 3.0 or later.")
+
+    def quit(self):
+        self.numberstore.close()
+        self.parent.quit()
+
 
 def main():
     root = Tk()
